@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <title>Urdu Audio Chatbot</title>
+    <style>
+      .conversation {
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-top: 10px;
+        height: 500px;
+        overflow-y: auto;
+        font-size: 1.25rem; /* Increased font size */
+      }
+      .user-msg,
+      .bot-msg {
+        margin-bottom: 10px;
+        padding: 10px;
+        border-radius: 5px;
+        max-width: 75%;
+      }
+      .user-msg {
+        background-color: #d1e7dd;
+        text-align: right;
+        margin-left: auto;
+      }
+      .bot-msg {
+        background-color: #f8d7da;
+        text-align: left;
+        margin-right: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1 class="mt-5">Urdu Audio Chatbot</h1>
+      <div class="mt-4">
+        <button id="record-btn" class="btn btn-primary">Record</button>
+        <button id="stop-btn" class="btn btn-danger" disabled>Stop</button>
+        <audio id="audio-playback" controls hidden></audio>
+      </div>
+      <div class="conversation mt-4">
+        <!-- Messages will be displayed here -->
+      </div>
+    </div>
+
+    <script>
+      let recorder;
+      let audioChunks = [];
+
+      document
+        .getElementById("record-btn")
+        .addEventListener("click", async () => {
+          if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            try {
+              const stream = await navigator.mediaDevices.getUserMedia({
+                audio: true,
+              });
+              recorder = new MediaRecorder(stream);
+
+              recorder.ondataavailable = (event) => {
+                audioChunks.push(event.data);
+              };
+
+              recorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
+                audioChunks = [];
+
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const audio = document.getElementById("audio-playback");
+                audio.src = audioUrl;
+                audio.hidden = false;
+
+                const formData = new FormData();
+                formData.append("file", audioBlob, "recorded_audio.mp3");
+
+                const response = await fetch("/upload", {
+                  method: "POST",
+                  body: formData,
+                });
+
+                if (response.ok) {
+                  const result = await response.json();
+
+                  const conversationDiv =
+                    document.querySelector(".conversation");
+                  const userMsgDiv = document.createElement("div");
+                  userMsgDiv.classList.add("user-msg");
+                  userMsgDiv.textContent = `آپ: ${result.transcription}`;
+                  conversationDiv.appendChild(userMsgDiv);
+
+                  const botMsgDiv = document.createElement("div");
+                  botMsgDiv.classList.add("bot-msg");
+                  botMsgDiv.textContent = `بوٹ: ${result.response}`;
+                  conversationDiv.appendChild(botMsgDiv);
+
+                  // Add a Speak button for the bot message
+                  const speakButton = document.createElement("button");
+                  speakButton.classList.add("btn", "btn-secondary", "mt-2");
+                  speakButton.textContent = "Speak";
+                  speakButton.addEventListener("click", () =>
+                    playAudio(result.audio_url)
+                  );
+                  botMsgDiv.appendChild(speakButton);
+
+                  conversationDiv.scrollTop = conversationDiv.scrollHeight;
+                } else {
+                  console.error("Error:", response.statusText);
+                }
+              };
+
+              recorder.start();
+              document.getElementById("record-btn").disabled = true;
+              document.getElementById("stop-btn").disabled = false;
+            } catch (error) {
+              console.error("Error accessing media devices.", error);
+            }
+          } else {
+            console.warn("getUserMedia not supported on your browser!");
+          }
+        });
+
+      document.getElementById("stop-btn").addEventListener("click", () => {
+        if (recorder) {
+          recorder.stop();
+          document.getElementById("record-btn").disabled = false;
+          document.getElementById("stop-btn").disabled = true;
+        }
+      });
+
+      function playAudio(audioUrl) {
+        const audio = new Audio(audioUrl);
+        audio.play();
+      }
+    </script>
+  </body>
+</html>
