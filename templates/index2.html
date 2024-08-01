@@ -7,6 +7,10 @@
       href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
       rel="stylesheet"
     />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+      rel="stylesheet"
+    />
     <title>Urdu Audio Chatbot</title>
     <style>
       .conversation {
@@ -15,7 +19,7 @@
         margin-top: 10px;
         height: 500px;
         overflow-y: auto;
-        font-size: 1.25rem; /* Increased font size */
+        font-size: 1.25rem;
       }
       .user-msg,
       .bot-msg {
@@ -23,6 +27,7 @@
         padding: 10px;
         border-radius: 5px;
         max-width: 75%;
+        font-size: 1.25rem;
       }
       .user-msg {
         background-color: #d1e7dd;
@@ -51,6 +56,25 @@
       .btn-danger:visited {
         background-color: #b30e0e !important;
       }
+      .loading-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .loading-placeholder img {
+        height: 24px; /* Adjust height as needed */
+        margin-left: 10px;
+      }
+      .speak-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        margin-left: 10px;
+      }
+      .speak-btn i {
+        font-size: 1.5rem;
+        color: #007bff;
+      }
     </style>
   </head>
   <body>
@@ -72,7 +96,6 @@
         </p>
       </div>
     </div>
-
     <script>
       let recorder;
       let audioChunks = [];
@@ -103,64 +126,110 @@
                 const formData = new FormData();
                 formData.append("file", audioBlob, "recorded_audio.mp3");
 
-                const response = await fetch("/upload", {
+                // Show user message immediately after recording
+                const conversationDiv = document.querySelector(".conversation");
+                const userMsgDiv = document.createElement("div");
+                userMsgDiv.classList.add("user-msg");
+                userMsgDiv.innerHTML =
+                  'آپ کا پیغام... <div class="loading-placeholder"><img src="static/loading.gif" alt="loading" /></div>';
+                conversationDiv.appendChild(userMsgDiv);
+
+                // Add a placeholder for the bot's response
+                const botMsgDiv = document.createElement("div");
+                botMsgDiv.classList.add("bot-msg", "loading-placeholder");
+                botMsgDiv.innerHTML =
+                  'بوٹ جواب دے رہا ہے... <img src="static/loading.gif" alt="loading" />';
+                conversationDiv.appendChild(botMsgDiv);
+                conversationDiv.scrollTop = conversationDiv.scrollHeight;
+
+                const transcriptionResponse = await fetch("/upload", {
                   method: "POST",
                   body: formData,
                 });
 
-                if (response.ok) {
-                  const result = await response.json();
+                if (transcriptionResponse.ok) {
+                  const transcriptionResult =
+                    await transcriptionResponse.json();
+                  console.log(transcriptionResult); // Log the result to check its structure
 
-                  const conversationDiv =
-                    document.querySelector(".conversation");
-                  const userMsgDiv = document.createElement("div");
-                  userMsgDiv.classList.add("user-msg");
-                  userMsgDiv.textContent = `آپ: ${result.transcription}`;
-                  conversationDiv.appendChild(userMsgDiv);
+                  // Ensure result and its properties exist
+                  if (
+                    transcriptionResult &&
+                    transcriptionResult.transcription
+                  ) {
+                    // Update user message with transcription
+                    userMsgDiv.innerHTML = `<strong>آپ:</strong> ${transcriptionResult.transcription}`;
 
-                  const botMsgDiv = document.createElement("div");
-                  botMsgDiv.classList.add("bot-msg");
-                  botMsgDiv.textContent = `بوٹ: ${result.response}`;
-                  conversationDiv.appendChild(botMsgDiv);
+                    // Fetch bot response
+                    const botResponse = await fetch("/bot_response", {
+                      method: "POST",
+                      body: JSON.stringify({
+                        transcription: transcriptionResult.transcription,
+                      }),
+                      headers: { "Content-Type": "application/json" },
+                    });
 
-                  // Add a Speak button for the bot message
-                  const speakButton = document.createElement("button");
-                  speakButton.classList.add("btn", "btn-secondary", "mt-2");
-                  speakButton.textContent = "Speak";
-                  speakButton.addEventListener("click", () =>
-                    playAudio(result.audio_url)
-                  );
-                  botMsgDiv.appendChild(speakButton);
+                    if (botResponse.ok) {
+                      const result = await botResponse.json();
+                      if (result && result.response && result.audio_url) {
+                        // Update bot message with the actual response
+                        botMsgDiv.classList.remove("loading-placeholder");
+                        botMsgDiv.innerHTML = `
+                        <strong>بوٹ:</strong> ${result.response}
+                        <button class="speak-btn" data-audio-url="${result.audio_url}">
+                          <i class="fas fa-volume-up"></i>
+                        </button>
+                      `;
 
-                  conversationDiv.scrollTop = conversationDiv.scrollHeight;
+                        // Hide the audio element
+                        const audioElement = new Audio(result.audio_url);
+                        let isPlaying = false;
+
+                        botMsgDiv
+                          .querySelector(".speak-btn")
+                          .addEventListener("click", function () {
+                            if (isPlaying) {
+                              audioElement.pause();
+                            } else {
+                              audioElement.play();
+                            }
+                            isPlaying = !isPlaying;
+                          });
+
+                        conversationDiv.scrollTop =
+                          conversationDiv.scrollHeight;
+                      } else {
+                        botMsgDiv.innerHTML =
+                          "بوٹ: جوابی پیغام حاصل کرنے میں دشواری ہوئی.";
+                      }
+                    } else {
+                      botMsgDiv.innerHTML =
+                        "بوٹ: جوابی پیغام حاصل کرنے میں دشواری ہوئی.";
+                    }
+                  } else {
+                    userMsgDiv.innerHTML =
+                      "آپ کا پیغام: ٹرانسکرپشن حاصل کرنے میں دشواری ہوئی.";
+                  }
                 } else {
-                  console.error("Error:", response.statusText);
+                  userMsgDiv.innerHTML =
+                    "آپ کا پیغام: ٹرانسکرپشن حاصل کرنے میں دشواری ہوئی.";
                 }
               };
 
               recorder.start();
               document.getElementById("record-btn").disabled = true;
               document.getElementById("stop-btn").disabled = false;
-            } catch (error) {
-              console.error("Error accessing media devices.", error);
+            } catch (err) {
+              console.error("Error accessing microphone", err);
             }
-          } else {
-            console.warn("getUserMedia not supported on your browser!");
           }
         });
 
       document.getElementById("stop-btn").addEventListener("click", () => {
-        if (recorder) {
-          recorder.stop();
-          document.getElementById("record-btn").disabled = false;
-          document.getElementById("stop-btn").disabled = true;
-        }
+        recorder.stop();
+        document.getElementById("record-btn").disabled = false;
+        document.getElementById("stop-btn").disabled = true;
       });
-
-      function playAudio(audioUrl) {
-        const audio = new Audio(audioUrl);
-        audio.play();
-      }
     </script>
   </body>
 </html>
