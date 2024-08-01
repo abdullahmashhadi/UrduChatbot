@@ -12,14 +12,5 @@
             "src": "/(.*)",
             "dest": "/app2.py"
         }
-    ],
-    "build": {
-        "env": {
-          "PIP_NO_BINARY": "ffmpeg-python"
-        },
-        "commands": [
-            "apt-get update",
-            "apt-get install -y ffmpeg"
-        ]
-    }
+    ]
 }

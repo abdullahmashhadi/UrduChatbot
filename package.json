@@ -1,5 +1,5 @@
 {
-    "scripts": {
-      "postbuild": "apt-get update && apt-get install -y ffmpeg"
-    }
+  "scripts": {
+      "postinstall": "apt-get update && apt-get install -y ffmpeg"
   }
+}
