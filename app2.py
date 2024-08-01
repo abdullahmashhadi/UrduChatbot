@@ -58,7 +58,7 @@ def upload():
         return jsonify({'error': f'Gemini API call failed: {str(e)}'}), 500
 
 
-    tts_audio_path = os.path.join('static', 'audio', 'bot_response.mp3')
+    tts_audio_path = os.path.join('static', 'audio', 'bot_response1.mp3')
     try:
         tts = gTTS(text=cleaned_bot_response, lang='ur')
         tts.save(tts_audio_path)
