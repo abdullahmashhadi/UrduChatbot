@@ -39,7 +39,7 @@ def upload():
     
     # Transcribe the audio file to text using Whisper command line
     try:
-        subprocess.run(["whisper", audio_file_path, "--model", "base"], check=True)
+        subprocess.run(["whisper", audio_file_path, "--model", "base", "--language", "ur"], check=True)
         
         # Read the generated transcription file
         transcription_file_path = audio_file_path.replace(".mp3", ".txt")

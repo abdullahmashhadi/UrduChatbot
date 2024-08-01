@@ -4,6 +4,8 @@ templates/mask.html
 bot_response.mp3
 venv
 .env
+package.json
+install_ffmpeg.sh
 app.py
 app1.py
 audio.json
