@@ -4,14 +4,22 @@
         {
             "src": "app.py",
             "use": "@vercel/python",
-            "config": {"runtime": "python3.6"}
-            
+            "config": {"runtime": "python3.9"}
         }
     ],
     "routes": [
         {
             "src": "/(.*)",
-            "dest": "app2.py"
+            "dest": "/app.py"
         }
-    ]
+    ],
+    "build": {
+        "env": {
+          "PIP_NO_BINARY": "ffmpeg-python"
+        },
+        "commands": [
+            "apt-get update",
+            "apt-get install -y ffmpeg"
+        ]
+    }
 }
