@@ -1,5 +1,5 @@
 {
   "scripts": {
-      "postinstall": "apt-get update && apt-get install -y ffmpeg"
+      "postinstall": "./install_ffmpeg.sh"
   }
 }
