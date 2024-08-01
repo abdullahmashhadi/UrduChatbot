@@ -34,18 +34,42 @@
         text-align: left;
         margin-right: auto;
       }
+      .footer {
+        margin-top: 20px;
+        font-size: 0.9em;
+        text-align: center;
+      }
+      .btn-primary,
+      .btn-primary:hover,
+      .btn-primary:active,
+      .btn-primary:visited {
+        background-color: #178f21 !important;
+      }
+      .btn-danger,
+      .btn-danger:hover,
+      .btn-danger:active,
+      .btn-danger:visited {
+        background-color: #b30e0e !important;
+      }
     </style>
   </head>
   <body>
     <div class="container">
       <h1 class="mt-5">Urdu Audio Chatbot</h1>
-      <div class="mt-4">
-        <button id="record-btn" class="btn btn-primary">Record</button>
-        <button id="stop-btn" class="btn btn-danger" disabled>Stop</button>
-        <audio id="audio-playback" controls hidden></audio>
+      <div class="mt-4 d-flex align-items-center">
+        <button id="record-btn" class="btn btn-primary mr-2">Record</button>
+        <button id="stop-btn" class="btn btn-danger mr-2" disabled>Stop</button>
+        <audio id="audio-playback" controls class="ml-2" hidden></audio>
       </div>
       <div class="conversation mt-4">
         <!-- Messages will be displayed here -->
+      </div>
+      <div class="footer">
+        <p>Developed at <strong>HPC Lab SEECS </strong></p>
+        <p>
+          This is the alpha version of this software. For any issue report
+          <a href="www.drive.google.com" target="_blank"> here </a>
+        </p>
       </div>
     </div>
 
