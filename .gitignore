@@ -1,8 +1,6 @@
 templates/index.html
 templates/index1.html
-templates/index2.html
 templates/mask.html
-bot_response.mp3
 response_audio.mp3
 venv
 .env
@@ -68,3 +66,6 @@ zia.srt
 zia.tsv
 zia.txt
 zia.vtt
+templates/index2.html
+bot_response.mp3
+
