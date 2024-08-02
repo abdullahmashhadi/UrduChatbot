@@ -24,7 +24,7 @@ def preprocess_text(text):
 
 @app.route('/')
 def index():
-    return render_template('index2.html')
+    return render_template('index3.html')
 
 @app.route('/upload', methods=['POST'])
 def upload():

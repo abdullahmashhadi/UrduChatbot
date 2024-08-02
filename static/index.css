@@ -1,0 +1,62 @@
+.conversation {
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-top: 10px;
+  height: 500px;
+  overflow-y: auto;
+  font-size: 1.25rem;
+}
+.user-msg,
+.bot-msg {
+  margin-bottom: 10px;
+  padding: 10px;
+  border-radius: 5px;
+  max-width: 75%;
+  font-size: 1.25rem;
+}
+.user-msg {
+  background-color: #d1e7dd;
+  text-align: right;
+  margin-left: auto;
+}
+.bot-msg {
+  background-color: #f8d7da;
+  text-align: left;
+  margin-right: auto;
+}
+.footer {
+  margin-top: 20px;
+  font-size: 0.9em;
+  text-align: center;
+}
+.btn-primary,
+.btn-primary:hover,
+.btn-primary:active,
+.btn-primary:visited {
+  background-color: #178f21 !important;
+}
+.btn-danger,
+.btn-danger:hover,
+.btn-danger:active,
+.btn-danger:visited {
+  background-color: #b30e0e !important;
+}
+.loading-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.loading-placeholder img {
+  height: 24px; /* Adjust height as needed */
+  margin-left: 10px;
+}
+.speak-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-left: 10px;
+}
+.speak-btn i {
+  font-size: 1.5rem;
+  color: #007bff;
+}
