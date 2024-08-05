@@ -51,7 +51,17 @@ document.getElementById("record-btn").addEventListener("click", async () => {
           console.log(transcriptionResult); // Log the result to check its structure
 
           // Ensure result and its properties exist
-          if (transcriptionResult && transcriptionResult.transcription) {
+          if (
+            transcriptionResult &&
+            transcriptionResult.transcription &&
+            transcriptionResult.audio_url
+          ) {
+            // Store transcription in LocalStorage
+            localStorage.setItem(
+              "transcription",
+              transcriptionResult.transcription
+            );
+
             // Update user message with transcription
             userMsgDiv.innerHTML = `<strong>آپ:</strong> ${transcriptionResult.transcription}`;
 
@@ -70,11 +80,11 @@ document.getElementById("record-btn").addEventListener("click", async () => {
                 // Update bot message with the actual response
                 botMsgDiv.classList.remove("loading-placeholder");
                 botMsgDiv.innerHTML = `
-                  <strong>بوٹ:</strong> ${result.response}
-                  <button class="speak-btn" data-audio-url="${result.audio_url}">
-                    <i class="fas fa-volume-up"></i>
-                  </button>
-                `;
+                                    <strong>بوٹ:</strong> ${result.response}
+                                    <button class="speak-btn" data-audio-url="${result.audio_url}">
+                                        <i class="fas fa-volume-up"></i>
+                                    </button>
+                                `;
 
                 // Hide the audio element
                 const audioElement = new Audio(result.audio_url);

@@ -6,16 +6,28 @@ from gtts import gTTS
 from dotenv import load_dotenv
 import re
 import uuid
+import boto3
 
 app = Flask(__name__)
 
-# Configure the API key from an environment variable
+# Load environment variables from .env file
 load_dotenv()
+
+# Configure the API key from an environment variable
 api_key = os.getenv("API_KEY")
 genai.configure(api_key=api_key)
 
 # Initialize the model
 model = genai.GenerativeModel('gemini-1.5-flash')
+
+# Configure S3
+s3 = boto3.client(
+    's3',
+    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+    aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+    region_name=os.getenv('AWS_REGION')
+)
+bucket_name = os.getenv("S3_BUCKET_NAME")
 
 def preprocess_text(text):
     # Remove asterisks and any other unwanted characters or formatting
@@ -38,6 +50,11 @@ def upload():
     audio_file_path = 'uploaded_audio2.mp3'
     file.save(audio_file_path)
     
+    # Upload the file to S3
+    s3_filename = f"user_audio_{uuid.uuid4().hex}.mp3"
+    s3.upload_file(audio_file_path, bucket_name, s3_filename)
+    audio_url = s3.generate_presigned_url('get_object', Params={'Bucket': bucket_name, 'Key': s3_filename}, ExpiresIn=3600)
+    
     # Transcribe the audio file to text using Whisper command line
     try:
         subprocess.run(["whisper", audio_file_path, "--model", "base", "--language", "ur"], check=True)
@@ -51,7 +68,7 @@ def upload():
         print(f"Transcription error: {str(e)}")  # Debugging line
         return jsonify({'error': f'Transcription failed: {str(e)}'}), 500
     
-    return jsonify({'transcription': urdu_text}), 200
+    return jsonify({'transcription': urdu_text, 'audio_url': audio_url}), 200
 
 @app.route('/bot_response', methods=['POST'])
 def bot_response():
@@ -74,11 +91,16 @@ def bot_response():
         
         tts = gTTS(text=cleaned_bot_response, lang='ur')
         tts.save(audio_path)
+        
+        # Upload the response audio to S3
+        s3.upload_file(audio_path, bucket_name, unique_filename)
+        audio_url = s3.generate_presigned_url('get_object', Params={'Bucket': bucket_name, 'Key': unique_filename}, ExpiresIn=3600)
+        os.remove(audio_path)
     except Exception as e:
         print(f"Bot response error: {str(e)}")  # Debugging line
         return jsonify({'error': f'Bot response generation failed: {str(e)}'}), 500
     
-    return jsonify({'response': bot_response, 'audio_url': audio_path}), 200
+    return jsonify({'response': bot_response, 'audio_url': audio_url}), 200
 
 @app.route('/static/audio/<path:filename>')
 def serve_audio(filename):
@@ -86,4 +108,3 @@ def serve_audio(filename):
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=int(os.getenv("PORT", 5000)))
-

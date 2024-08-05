@@ -3,3 +3,4 @@
  !pip install flask
  !pip install google.generativeai as genai
  !pip install python-dotenv
+ !pip install boto3
