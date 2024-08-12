@@ -81,6 +81,7 @@ def bot_response():
     
     prompt = data['transcription']
     try:
+        # Generate the bot response
         response = model.generate_content(prompt)
         bot_response = response.text
         print(f"Bot Response: {bot_response}")  # Debugging line
@@ -88,22 +89,31 @@ def bot_response():
         # Preprocess the bot response text
         cleaned_bot_response = preprocess_text(bot_response)
 
+        # Ensure the 'static/audio' directory exists
+        audio_directory = 'static/audio'
+        if not os.path.exists(audio_directory):
+            os.makedirs(audio_directory)
+
         # Generate a unique filename using uuid
         unique_filename = f"bot_response_{uuid.uuid4().hex}.mp3"
-        audio_path = os.path.join('static/audio', unique_filename)
+        audio_path = os.path.join(audio_directory, unique_filename)
         
+        # Generate the audio file
         tts = gTTS(text=cleaned_bot_response, lang='ur')
         tts.save(audio_path)
         
         # Upload the response audio to S3
         s3.upload_file(audio_path, bucket_name, unique_filename)
         audio_url = s3.generate_presigned_url('get_object', Params={'Bucket': bucket_name, 'Key': unique_filename}, ExpiresIn=3600)
+        
+        # Remove the local audio file after successful upload
         os.remove(audio_path)
     except Exception as e:
         print(f"Bot response error: {str(e)}")  # Debugging line
         return jsonify({'error': f'Bot response generation failed: {str(e)}'}), 500
     
     return jsonify({'response': bot_response, 'audio_url': audio_url}), 200
+
 
 @app.route('/static/audio/<path:filename>')
 def serve_audio(filename):
