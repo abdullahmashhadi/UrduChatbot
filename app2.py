@@ -47,14 +47,14 @@ def upload():
         return jsonify({'error': 'No selected file'}), 400
     
     # Save the file temporarily
-    audio_file_path = f'uploaded_audio_{uuid.uuid4().hex}.mp3'
+    base_filename = 'uploaded_audio_' + uuid.uuid4().hex
+    audio_file_path = base_filename + '.mp3'
     file.save(audio_file_path)
     
     # Upload the file to S3
     s3_filename = f"user_audio_{uuid.uuid4().hex}.mp3"
     s3.upload_file(audio_file_path, bucket_name, s3_filename)
     audio_url = s3.generate_presigned_url('get_object', Params={'Bucket': bucket_name, 'Key': s3_filename}, ExpiresIn=3600)
-    
     # Download the file from S3
     s3.download_file(bucket_name, s3_filename, audio_file_path)
     
@@ -67,10 +67,14 @@ def upload():
         with open(transcription_file_path, 'r', encoding='utf-8') as f:
             urdu_text = f.read().strip()
         print(f"Transcription: {urdu_text}")  # Debugging line
+        extensions = ['.mp3', '.json', '.srt', '.vtt', '.txt', '.tsv']
+        for ext in extensions:
+            file_to_remove = base_filename+ext
+            os.remove(file_to_remove)
     except Exception as e:
         print(f"Transcription error: {str(e)}")  # Debugging line
         return jsonify({'error': f'Transcription failed: {str(e)}'}), 500
-    
+
     return jsonify({'transcription': urdu_text, 'audio_url': audio_url}), 200
 
 @app.route('/bot_response', methods=['POST'])
